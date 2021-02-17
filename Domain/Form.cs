@@ -2,7 +2,7 @@
 
 namespace Domain
 {
-    public class FormType : EntityBase
+    public class Form : EntityBase
     {
         public string Title { get; set; }
         public string Fields { get; set; }
