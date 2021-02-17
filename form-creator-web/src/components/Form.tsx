@@ -3,68 +3,70 @@ import { useForm } from "react-hook-form";
 import { Box, Grid, FormControl, FormLabel, Input, Select, IconButton, Button } from "@chakra-ui/react";
 import { PlusSquareIcon, DeleteIcon } from "@chakra-ui/icons";
 import { FormValues } from "../app/models/formValues";
+import PreviewFields from "./PreviewFields";
 
 const Form = ({
-    startingState = {
-      title: "Title 1",
-      fields: [{ type: "", name: "", placeholder: "", options: "", required: "" }],
-    },
-  }) => {
-    const fieldTypes = [
-      { value: "Text", display: "Text" },
-      { value: "Dropdown", display: "Dropdown" },
-      { value: "Checkbox", display: "Checkbox" },
-      { value: "Radio", display: "Radio" },
-      { value: "Textarea", display: "textarea" },
-      { value: "File", display: "File" },
-    ];
-  
-    const isRequired = [
-      { value: "Yes", display: "Yes" },
-      { value: "No", display: "No" },
-    ];
-  
-    const { register, errors, handleSubmit, formState, watch } = useForm({
-      mode: "all",
-      reValidateMode: "onChange",
-      defaultValues: startingState,
+  startingState = {
+    title: "",
+    fields: [{ type: "", name: "", placeholder: "", options: "", required: "" }],
+  },
+}) => {
+  const fieldTypes = [
+    { value: "Text", display: "Text" },
+    { value: "Dropdown", display: "Dropdown" },
+    { value: "Checkbox", display: "Checkbox" },
+    { value: "Radio", display: "Radio" },
+    { value: "Textarea", display: "textarea" },
+    { value: "File", display: "File" },
+  ];
+
+  const isRequired = [
+    { value: "Yes", display: "Yes" },
+    { value: "No", display: "No" },
+  ];
+
+  const { register, errors, handleSubmit, formState, watch, control } = useForm({
+    mode: "all",
+    reValidateMode: "onChange",
+    defaultValues: startingState,
+  });
+
+  const { isDirty, isSubmitting } = formState;
+
+  const [fieldIds, setFieldIds] = useState(Object.keys(startingState.fields));
+
+  const addField = () => {
+    let max = findmax(fieldIds);
+    setFieldIds([...fieldIds, (max + 1).toString()]);
+  };
+
+  const removeField = (index: string) => {
+    setFieldIds(fieldIds.filter((i) => i !== index));
+  };
+
+  const onSubmit = (data: FormValues) => {
+    console.log({
+      ...data,
+      fields: Object.values(data.fields),
     });
-  
-    const { isDirty, isSubmitting } = formState;
-  
-    const [fieldIds, setFieldIds] = useState(Object.keys(startingState.fields));
-  
-    const addField = () => {
-      let max = findmax(fieldIds);
-      setFieldIds([...fieldIds, (max + 1).toString()]);
-    };
-  
-    const removeField = (index: string) => {
-      setFieldIds(fieldIds.filter((i) => i !== index));
-    };
-  
-    const onSubmit = (data: FormValues) => {
-      console.log({
-        ...data,
-        fields: Object.values(data.fields),
-      });
-    };
-  
-    const findmax = (array: string[]) => {
-      var fieldIds = array.map(Number),
-        max = 0,
-        len = array.length,
-        counter;
-  
-      for (counter = 0; counter < len; counter++) {
-        if (fieldIds[counter] > max) {
-          max = fieldIds[counter];
-        }
+  };
+
+  const findmax = (array: string[]) => {
+    var fieldIds = array.map(Number),
+      max = 0,
+      len = array.length,
+      counter;
+
+    for (counter = 0; counter < len; counter++) {
+      if (fieldIds[counter] > max) {
+        max = fieldIds[counter];
       }
-      return max;
-    };
-  
-    return (
+    }
+    return max;
+  };
+
+  return (
+    <>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Box colorScheme="blue" w="auto" p={2} m="auto">
           <FormControl isInvalid={!!errors.title}>
@@ -100,7 +102,7 @@ const Form = ({
                   ))}
                 </Select>
               </FormControl>
-  
+
               <FormControl isInvalid={errors.fields && !!errors.fields[parseInt(id)]?.name}>
                 <Input
                   type="text"
@@ -111,7 +113,7 @@ const Form = ({
                   ref={register({ required: "Name is Required*" })}
                 />
               </FormControl>
-  
+
               <FormControl isInvalid={errors.fields && !!errors.fields[parseInt(id)]?.placeholder}>
                 <Input
                   type="text"
@@ -119,7 +121,7 @@ const Form = ({
                   placeholder="Placeholder text"
                   size="sm"
                   isInvalid={errors.fields && !!errors.fields[parseInt(id)]?.placeholder}
-                  ref={register({ required: "Placeholder is Required*" })}
+                  ref={register({ required: watch(`fields[${id}].type`) !== "Radio" })}
                 />
               </FormControl>
               <FormControl isInvalid={errors.fields && !!errors.fields[parseInt(id)]?.options}>
@@ -128,9 +130,9 @@ const Form = ({
                   name={`fields[${id}].options`}
                   placeholder="Comma separated list"
                   size="sm"
-                  disabled={watch(`fields[${id}].type`) !== "Dropdown"}
+                  disabled={!(watch(`fields[${id}].type`) === "Dropdown" || watch(`fields[${id}].type`) === "Radio")}
                   ref={register({
-                    required: watch(`fields[${id}].type`) === "Dropdown",
+                    required: watch(`fields[${id}].type`) === "Dropdown" || watch(`fields[${id}].type`) === "Radio",
                   })}
                 />
               </FormControl>
@@ -167,7 +169,11 @@ const Form = ({
           </Button>
         </Box>
       </form>
-    );
-  }
+      <Box colorScheme="blue" w="auto" p={2} m="auto">
+        <PreviewFields control={control} />
+      </Box>
+    </>
+  );
+};
 
-export default Form
+export default Form;
